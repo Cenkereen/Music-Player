@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Playlist Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            margin: 0 auto;
+        }
+        .rectangle {
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            height: 600px;
+            margin: 20px auto;
+            overflow-y: auto;
+        }
+        h3 {
+            margin: 0;
+            padding: 10px 15px;
+            text-align: center;
+        }
+        .song-list {
+            list-style: none;
+            padding: 0 15px;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            justify-items: center;
+        }
+        .song-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            width: 160px;
+        }
+        .song-item strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .song-item span {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin: 2px 0;
+        }
+        .song-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            background: #ff6f61;
+            border-color: #999;
+        }
+        .search-container {
+            margin: 10px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        #songInput {
+            padding: 8px;
+            width: 70%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .add-button {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='homepage.html'">← Back</button>
+    <div class="container">
+        <h2 id="playlistTitle"></h2>
+    </div>
+    <div class="rectangle">
+        <h3>Songs:</h3>
+        <div class="search-container">
+            <input type="text" id="songInput" placeholder="Enter song name to add">
+            <button class="add-button" onclick="addSongToPlaylist()">Add Song</button>
+        </div>
+        <ul id="songList" class="song-list"></ul>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const playlistName = decodeURIComponent(urlParams.get('search'));
+        document.getElementById('playlistTitle').textContent = playlistName;
+
+        function addSongToPlaylist() {
+            const songName = document.getElementById('songInput').value;
+            if (!songName) return;
+
+            fetch('add_to_playlist.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    song: songName,
+                    playlist: playlistName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    loadPlaylistSongs();
+                    document.getElementById('songInput').value = '';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function loadPlaylistSongs() {
+            fetch('playlistpage.php' + window.location.search)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        const songList = data.songs.map((song, index) => `
+                            <li class="song-item" onclick="window.location.href='currentmusic.html?song=${encodeURIComponent(song)}'">
+                                <strong>${song}</strong>
+                                <span>Artist: ${data.artists[index]}</span>
+                                <span>Album: ${data.albums[index]}</span>
+                            </li>
+                        `).join('');
+                        document.getElementById('songList').innerHTML = songList;
+                    } else {
+                        document.getElementById('songList').innerHTML = 
+                            '<li class="song-item">No songs in playlist</li>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('songList').innerHTML = 
+                        '<li class="song-item">Error loading songs</li>';
+                });
+        }
+
+        loadPlaylistSongs();
+    </script>
+</body>
+</html>

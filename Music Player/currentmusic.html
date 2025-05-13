@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Music</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        padding: 8px 16px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .back-button:hover {
+        background: #ff6f61;
+        border-color: #999;
+    }
+        .music-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .song-info {
+            margin: 20px 0;
+            text-align: left;
+        }
+        .song-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .song-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .song-cover {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .label {
+            font-weight: bold;
+            color: #333;
+            width: 120px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='homepage.html'">← Back</button>
+    <div class="music-container">
+        <img id="songCover" class="song-cover" src="" alt="Song Cover">
+        <div class="song-info">
+            <div id="title" class="song-title"></div>
+            <div class="song-details">
+                <span class="label">Artist:</span> 
+                <span id="artist"></span>
+            </div>
+            <div class="song-details">
+                <span class="label">Album:</span> 
+                <span id="album"></span>
+            </div>
+            <div class="song-details">
+                <span class="label">Genre:</span> 
+                <span id="genre"></span>
+            </div>
+            <div class="song-details">
+                <span class="label">Duration:</span> 
+                <span id="duration"></span>
+            </div>
+            <div class="song-details">
+                <span class="label">Release Date:</span> 
+                <span id="releaseDate"></span>
+            </div>
+            <div class="song-details">
+                <span class="label">Rank:</span> 
+                <span id="rank"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const songName = urlParams.get('song');
+
+        if (!songName) {
+            alert('No song specified');
+            window.location.href = 'homepage.html';
+        }
+
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        fetch('currentmusic.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ song: songName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                document.getElementById('title').textContent = data.song.title;
+                document.getElementById('artist').textContent = data.song.artist;
+                document.getElementById('album').textContent = data.song.album;
+                document.getElementById('genre').textContent = data.song.genre;
+                document.getElementById('duration').textContent = formatDuration(data.song.duration);
+                document.getElementById('releaseDate').textContent = data.song.release_date;
+                document.getElementById('rank').textContent = data.song.rank;
+                document.getElementById('songCover').src = data.song.image || 'default-cover.jpg';
+            } else {
+                alert('Song not found');
+                window.location.href = 'homepage.html';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load song details');
+            window.location.href = 'homepage.html';
+        });
+    </script>
+</body>
+</html>

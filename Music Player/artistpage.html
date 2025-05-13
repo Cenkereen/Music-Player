@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: #ff6f61;
+            border-color: #999;
+        }
+
+        .artist-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .artist-info {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .artist-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .artist-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .artist-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .label {
+            font-weight: bold;
+            color: #333;
+            width: 120px;
+            display: inline;
+        }
+
+        .list-section {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .list-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .list-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            justify-items: center;
+        }
+
+        .item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            width: 160px;
+        }
+
+        .item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        #followButton {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            color: #333;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #followButton:hover {
+            background-color: #ff6f61;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='homepage.html'">← Back</button>
+    <div class="artist-container">
+        <img id="artistImage" class="artist-image" src="" alt="Artist Image">
+        <div class="artist-info">
+            <div id="name" class="artist-name"></div>
+            <div class="artist-details">
+                <span class="label">Bio:</span>
+                <span id="bio"></span>
+            </div>
+            <div class="artist-details">
+                <span class="label">Country:</span> 
+                <span id="country"></span>
+            </div>
+            <div class="artist-details">
+                <span class="label">Listeners:</span> 
+                <span id="listeners"></span>
+            </div>
+
+            <button id="followButton">Follow</button>
+
+            <div class="list-section">
+                <div class="list-title">Albums:</div>
+                <ul id="albumsList" class="list-items"></ul>
+            </div>
+
+            <div class="list-section">
+                <div class="list-title">Songs:</div>
+                <ul id="songsList" class="list-items"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const artistName = urlParams.get('search');
+        let isFollowing = false;
+
+        if (!artistName) {
+            alert('No artist specified');
+            window.location.href = 'homepage.html';
+        }
+
+        function updateFollowButton() {
+            const button = document.getElementById("followButton");
+            button.textContent = isFollowing ? "Unfollow" : "Follow";
+        }
+
+        function toggleFollow() {
+            const action = isFollowing ? "unfollow" : "follow";
+            fetch('artistpage.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ artist: artistName, action })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    isFollowing = !isFollowing;
+                    document.getElementById("listeners").textContent = data.listeners.toLocaleString();
+                    updateFollowButton();
+                } else {
+                    alert("Failed to update follow status.");
+                }
+            });
+        }
+
+        fetch('artistpage.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ artist: artistName })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                document.getElementById('bio').textContent = data.artist.bio;
+                document.getElementById('name').textContent = data.artist.name;
+                document.getElementById('country').textContent = data.artist.country;
+                document.getElementById('listeners').textContent = data.artist.listeners.toLocaleString();
+                document.getElementById('artistImage').src = data.artist.image;
+
+                const albumsList = data.artist.albums.map(album =>
+                    `<li class="item" onclick="window.location.href='albumpage.html?album=${encodeURIComponent(album)}'">
+                        <strong>${album}</strong>
+                    </li>`
+                ).join('');
+                document.getElementById('albumsList').innerHTML = albumsList;
+
+                const songsList = data.artist.songs.map(song =>
+                    `<li class="item" onclick="window.location.href='currentmusic.html?song=${encodeURIComponent(song)}'">
+                        <strong>${song}</strong>
+                    </li>`
+                ).join('');
+                document.getElementById('songsList').innerHTML = songsList;
+
+                updateFollowButton();
+                document.getElementById("followButton").addEventListener("click", toggleFollow);
+            } else {
+                alert('Artist not found');
+                window.location.href = 'homepage.html';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to load artist details');
+            window.location.href = 'homepage.html';
+        });
+    </script>
+</body>
+</html>

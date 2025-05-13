@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            background: #ff6f61;
+            border-color: #999;
+        }
+        .album-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .album-info {
+            margin: 20px 0;
+            text-align: left;
+        }
+        .album-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .album-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .album-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .label {
+            font-weight: bold;
+            color: #333;
+            width: 120px;
+            display: inline;
+        }
+        .list-section {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .list-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .list-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            justify-items: center;
+        }
+        .item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            width: 160px;
+        }
+        .item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='homepage.html'">← Back</button>
+    <div class="album-container">
+        <img id="albumImage" class="album-image" src="" alt="Album Image">
+        <div class="album-info">
+            <div id="albumTitle" class="album-name"></div>
+            <div class="album-details">
+                <span class="label">Artist:</span>
+                <span id="artistName"></span>
+            </div>
+            <div class="album-details">
+                <span class="label">Genre:</span> 
+                <span id="albumGenre"></span>
+            </div>
+            <div class="album-details">
+                <span class="label">Release Date:</span> 
+                <span id="albumReleaseDate"></span>
+            </div>
+
+            <!-- Songs Section -->
+            <div class="list-section">
+                <div class="list-title">Songs:</div>
+                <ul id="songList" class="list-items"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const albumName = decodeURIComponent(urlParams.get('album'));
+        
+        fetch('albumpage.php?album=' + encodeURIComponent(albumName))
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                        // Display album details
+                    document.getElementById('albumTitle').textContent = data.album_details.name;
+                    document.getElementById('albumGenre').textContent = data.album_details.genre;
+                    document.getElementById('albumReleaseDate').textContent = data.album_details.release_date;
+                    document.getElementById('albumImage').src = data.album_details.image;
+                    document.getElementById('artistName').textContent = data.album_details.artist_name;
+
+                        // Display song list
+                    const songList = data.songs.map((song, index) => `
+                        <li class="item" onclick="window.location.href='currentmusic.html?song=${encodeURIComponent(song.title)}'">
+                            <strong>${song.title}</strong><br>
+                            <span>Duration: ${song.duration} mins</span>
+                        </li>
+                    `).join('');
+                    document.getElementById('songList').innerHTML = songList;
+                } else {
+                    document.getElementById('songList').innerHTML = 
+                        '<li class="item">No songs in album</li>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('songList').innerHTML = 
+                    '<li class="item">Error loading songs</li>';
+            });
+        
+
+        loadAlbumDetails();
+    </script>
+</body>
+</html>
